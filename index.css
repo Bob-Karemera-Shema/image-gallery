@@ -5,9 +5,9 @@
 }
 
 body {
-    padding: 16px;
+    padding: 16px 60px;
     font-family: 'Raleway', sans-serif;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .container {
@@ -18,15 +18,19 @@ body {
 
 .page-heading-container {
     width: 100%;
-    margin: 16px 0 48px;
+    margin: 16px 0 32px;
     display: flex;
     align-items: center;
 }
 
 .page-heading {
-    font-size: 30px;
+    font-size: 20px;
     font-weight: 800;
     text-transform: uppercase;
+    background-color: #7C4585;
+    color: white;
+    padding: 10px 50px 10px 10px;
+    letter-spacing: 1px;
 }
 
 .image-grid {
@@ -53,7 +57,13 @@ body {
     height: 100%;
     z-index: 2;
     border-radius: 10px;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 25px;
+    font-weight: 500;
 }
 
 .thumbnail {
@@ -68,6 +78,7 @@ body {
 }
 
 .tile:hover .overlay {
+    display: flex;
     background-color: rgba(0, 0, 0, 0.6);
 }
 
@@ -106,7 +117,7 @@ body {
     height: auto;
 }
 
-.caption-coontainer {
+.caption-container {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -116,7 +127,7 @@ body {
 
 .author {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .download-link {
@@ -139,7 +150,7 @@ body {
     position: absolute;
     font-size: 30px;
     cursor: pointer;
-    padding: 5px;
+    padding: 10px;
     border-radius: 10px;
 }
 
@@ -150,4 +161,16 @@ body {
 #close-button {
     top: 20px;
     right: 30px;
+}
+
+#left-button {
+    top: 50%;
+    left: 32px;
+    transform: translateY(-50%);
+}
+
+#right-button {
+    top: 50%;
+    right: 32px;
+    transform: translateY(-50%);
 }
