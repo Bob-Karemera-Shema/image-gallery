@@ -116,12 +116,13 @@ body {
 
 .full-image-container {
     width: 100%;
-    height: fit-content;
+    height: 600px;
 }
 
 .full-image {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
 }
 
 .caption-container {
