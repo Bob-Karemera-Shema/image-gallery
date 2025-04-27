@@ -1,11 +1,11 @@
 import { Image, FetchedImage } from "./interfaces";
 
-const bodyEl = document.querySelector('body') as HTMLBodyElement;
-const imageGridEl = document.querySelector('.image-grid') as HTMLDivElement;
-const lightboxContainerEl = document.querySelector('.lightbox-container') as HTMLDivElement;
-const fullImageEl = document.querySelector('.full-image') as HTMLImageElement;
-const authorEl = document.querySelector('.author') as HTMLSpanElement;
-const downloadEl = document.querySelector('.download-link') as HTMLAnchorElement;
+const getElement = <T extends Element>(selector: string) => document.querySelector(selector) as T;
+
+const bodyEl = getElement('body') as HTMLBodyElement;
+const imageGridEl = getElement('.image-grid') as HTMLDivElement;
+const lightboxContainerEl = getElement('.lightbox-container') as HTMLDivElement;
+const lightboxEl = getElement('.lightbox') as HTMLDivElement;
 
 const imageArray: Image[] = [];
 let currentImageIndex = 0;
@@ -13,34 +13,33 @@ let currentImageIndex = 0;
 async function fetchImages(): Promise<void> {
     try {
         const response = await fetch('https://picsum.photos/v2/list');
-
         if (!response.ok) throw new Error("Failed to fetch images");
 
         const data: FetchedImage[] = await response.json();
 
-        data.slice(0, 20).forEach(image => {
-            imageArray.push({
-                id: image.id,
-                caption: `Photo by ${image.author}`,
-                thumbUrl: `https://picsum.photos/id/${image.id}/300/200`,
-                fullUrl: `https://picsum.photos/id/${image.id}/800/540`,
-            })
-        })
+        imageArray.push(
+            ...data.slice(0, 20).map(img => ({
+                id: img.id,
+                caption: `Photo by ${img.author}`,
+                thumbUrl: `https://picsum.photos/id/${img.id}/300/200.webp`,
+                fullUrl: `https://picsum.photos/id/${img.id}/800/540.webp`,
+            }))
+        );
 
         displayThumbnails();
+        populateLightbox();
     } catch (error) {
-        console.error("Image fetch error:", error);
-        alert(`Image fetch error: ${error}`);
+        console.error(error);
+        alert(error);
     }
 }
 
 function updateLightboxImage(index: number) {
-    const image = imageArray[index];
-    if(!image) return;
+    const prevSlide = lightboxEl.querySelector("[data-active]");
+    if(prevSlide) delete (prevSlide as HTMLElement).dataset.active;
 
-    fullImageEl.src = image.fullUrl;
-    authorEl.textContent = image.caption;
-    downloadEl.href = image.fullUrl;
+    const currentSlide = lightboxEl.children[index];
+    if(currentSlide) (currentSlide as HTMLElement).dataset.active = 'active';
 }
 
 function openFullImage(index: number) {
@@ -73,18 +72,17 @@ function displayThumbnails() {
     imageArray.forEach((image, index) => {
         const tileEl = document.createElement('div');
         tileEl.classList.add('tile');
-        tileEl.setAttribute('data-index', index.toString());
+        tileEl.dataset.index = index.toString();
 
         const imageEl = document.createElement('img');
         imageEl.classList.add('thumbnail');
-        imageEl.setAttribute('src', image.thumbUrl);
-        imageEl.setAttribute('alt', image.caption);
+        imageEl.src = image.thumbUrl;
+        imageEl.alt = image.caption;
 
         const overlayEl = document.createElement('span');
         overlayEl.classList.add('overlay');
 
-        tileEl.appendChild(imageEl);
-        tileEl.appendChild(overlayEl);
+        tileEl.append(imageEl, overlayEl);
 
         fragment.appendChild(tileEl);
     });
@@ -92,11 +90,51 @@ function displayThumbnails() {
     imageGridEl.appendChild(fragment);
 }
 
+function populateLightbox() {
+    const fragment = document.createDocumentFragment();
+
+    imageArray.forEach(image => {
+        const slideEl = document.createElement('div');
+        slideEl.classList.add('slide');
+
+        const imageContainerEl = document.createElement('div');
+        imageContainerEl.classList.add('full-image-container');
+
+        const imageEl = document.createElement('img');
+        imageEl.classList.add('full-image');
+        imageEl.src = image.fullUrl;
+        imageEl.alt = `Full view: ${image.caption}`;
+
+        imageContainerEl.appendChild(imageEl);
+
+        const captionContainerEl = document.createElement('div');
+        captionContainerEl.classList.add('caption-container');
+
+        const captionEl = document.createElement('span');
+        captionEl.classList.add('caption');
+        captionEl.textContent = image.caption;
+
+        const downloadEl = document.createElement('a');
+        downloadEl.classList.add('download-link');
+        downloadEl.textContent = 'Download';
+        downloadEl.href = image.fullUrl;
+        downloadEl.ariaLabel = 'Download full-size image';
+        downloadEl.target = '_blank';
+        downloadEl.rel = 'noopener noreferrer';
+
+        captionContainerEl.append(captionEl, downloadEl);
+        slideEl.append(imageContainerEl, captionContainerEl);
+        fragment.appendChild(slideEl);
+    });
+
+    lightboxEl.appendChild(fragment);
+}
+
 function openImageHandler(e: MouseEvent) {
     const tile = (e.target as HTMLElement).closest('.tile') as HTMLElement;
-    if (!tile) return;
+    if (!tile || !tile.dataset.index) return;
 
-    const index = parseInt(tile.dataset.index ? tile.dataset.index : '');
+    const index = parseInt(tile.dataset.index);
     if(!isNaN(index)) openFullImage(index);
 }
 

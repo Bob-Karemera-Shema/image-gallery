@@ -7,12 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const bodyEl = document.querySelector('body');
-const imageGridEl = document.querySelector('.image-grid');
-const lightboxContainerEl = document.querySelector('.lightbox-container');
-const fullImageEl = document.querySelector('.full-image');
-const authorEl = document.querySelector('.author');
-const downloadEl = document.querySelector('.download-link');
+const getElement = (selector) => document.querySelector(selector);
+const bodyEl = getElement('body');
+const imageGridEl = getElement('.image-grid');
+const lightboxContainerEl = getElement('.lightbox-container');
+const lightboxEl = getElement('.lightbox');
 const imageArray = [];
 let currentImageIndex = 0;
 function fetchImages() {
@@ -22,29 +21,28 @@ function fetchImages() {
             if (!response.ok)
                 throw new Error("Failed to fetch images");
             const data = yield response.json();
-            data.slice(0, 20).forEach(image => {
-                imageArray.push({
-                    id: image.id,
-                    caption: `Photo by ${image.author}`,
-                    thumbUrl: `https://picsum.photos/id/${image.id}/300/200`,
-                    fullUrl: `https://picsum.photos/id/${image.id}/800/540`,
-                });
-            });
+            imageArray.push(...data.slice(0, 20).map(img => ({
+                id: img.id,
+                caption: `Photo by ${img.author}`,
+                thumbUrl: `https://picsum.photos/id/${img.id}/300/200.webp`,
+                fullUrl: `https://picsum.photos/id/${img.id}/800/540.webp`,
+            })));
             displayThumbnails();
+            populateLightbox();
         }
         catch (error) {
-            console.error("Image fetch error:", error);
-            alert(`Image fetch error: ${error}`);
+            console.error(error);
+            alert(error);
         }
     });
 }
 function updateLightboxImage(index) {
-    const image = imageArray[index];
-    if (!image)
-        return;
-    fullImageEl.src = image.fullUrl;
-    authorEl.textContent = image.caption;
-    downloadEl.href = image.fullUrl;
+    const prevSlide = lightboxEl.querySelector("[data-active]");
+    if (prevSlide)
+        delete prevSlide.dataset.active;
+    const currentSlide = lightboxEl.children[index];
+    if (currentSlide)
+        currentSlide.dataset.active = 'active';
 }
 function openFullImage(index) {
     currentImageIndex = index;
@@ -73,24 +71,53 @@ function displayThumbnails() {
     imageArray.forEach((image, index) => {
         const tileEl = document.createElement('div');
         tileEl.classList.add('tile');
-        tileEl.setAttribute('data-index', index.toString());
+        tileEl.dataset.index = index.toString();
         const imageEl = document.createElement('img');
         imageEl.classList.add('thumbnail');
-        imageEl.setAttribute('src', image.thumbUrl);
-        imageEl.setAttribute('alt', image.caption);
+        imageEl.src = image.thumbUrl;
+        imageEl.alt = image.caption;
         const overlayEl = document.createElement('span');
         overlayEl.classList.add('overlay');
-        tileEl.appendChild(imageEl);
-        tileEl.appendChild(overlayEl);
+        tileEl.append(imageEl, overlayEl);
         fragment.appendChild(tileEl);
     });
     imageGridEl.appendChild(fragment);
 }
+function populateLightbox() {
+    const fragment = document.createDocumentFragment();
+    imageArray.forEach(image => {
+        const slideEl = document.createElement('div');
+        slideEl.classList.add('slide');
+        const imageContainerEl = document.createElement('div');
+        imageContainerEl.classList.add('full-image-container');
+        const imageEl = document.createElement('img');
+        imageEl.classList.add('full-image');
+        imageEl.src = image.fullUrl;
+        imageEl.alt = `Full view: ${image.caption}`;
+        imageContainerEl.appendChild(imageEl);
+        const captionContainerEl = document.createElement('div');
+        captionContainerEl.classList.add('caption-container');
+        const captionEl = document.createElement('span');
+        captionEl.classList.add('caption');
+        captionEl.textContent = image.caption;
+        const downloadEl = document.createElement('a');
+        downloadEl.classList.add('download-link');
+        downloadEl.textContent = 'Download';
+        downloadEl.href = image.fullUrl;
+        downloadEl.ariaLabel = 'Download full-size image';
+        downloadEl.target = '_blank';
+        downloadEl.rel = 'noopener noreferrer';
+        captionContainerEl.append(captionEl, downloadEl);
+        slideEl.append(imageContainerEl, captionContainerEl);
+        fragment.appendChild(slideEl);
+    });
+    lightboxEl.appendChild(fragment);
+}
 function openImageHandler(e) {
     const tile = e.target.closest('.tile');
-    if (!tile)
+    if (!tile || !tile.dataset.index)
         return;
-    const index = parseInt(tile.dataset.index ? tile.dataset.index : '');
+    const index = parseInt(tile.dataset.index);
     if (!isNaN(index))
         openFullImage(index);
 }
