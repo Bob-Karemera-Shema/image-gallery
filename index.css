@@ -76,7 +76,7 @@ body {
 
 .tile:hover {
     cursor: pointer;
-    scale: 1.03;
+    transform: scale(1.03);
 }
 
 .tile:hover .overlay {
@@ -103,14 +103,28 @@ body {
 }
 
 .lightbox {
-    width: 800px;
-    height: auto;
+    position: relative;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 0;
-    background-color: #f5f5f5;
+}
+
+.slide {
+    width: 800px;
+    height: auto;
+    position: absolute;
+    background-color: white;
+    opacity: 0;
+    transition: 200ms opacity ease-in-out;
+    transition-delay: 200ms;
+}
+
+.slide[data-active] {
+    opacity: 1;
 }
 
 .full-image-container {
@@ -132,7 +146,7 @@ body {
     padding: 16px 24px;
 }
 
-.author {
+.caption {
     font-size: 20px;
     font-weight: 700;
 }
@@ -227,7 +241,7 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .author {
+    .caption {
         font-size: 16px;
         line-height: 25px;
     }
